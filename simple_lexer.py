@@ -195,5 +195,6 @@ if __name__ == "__main__":
     script = "int (a +b*c/d)>= 45;"
     tokens = SimpleLexer().tokenize(script)
     dump(tokens)
+    print("finish")
 
 
