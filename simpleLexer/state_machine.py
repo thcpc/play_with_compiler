@@ -1,3 +1,4 @@
+#coding:utf-8
 from token import *
 
 class StateMachine():
@@ -26,6 +27,7 @@ class StateMachine():
 
     def next(self):
         self.state = self.state.accept(self)
+        
         if not self.has_next():
             return FinishTokenState(self.state.token)
         return self.state
@@ -43,6 +45,9 @@ class InitTokenState():
         if ch.isdigit():
             machine.forward()
             return IntLiteralState(self.token.change_to(IntLiteralToken,ch))
+        if ch.isalpha():
+            machine.forward()
+            return IdentifierState(self.token.change_to(IdentifierToken,ch))
         machine.forward()
         self.token.clean_text()
         return self
@@ -50,9 +55,16 @@ class InitTokenState():
     def name(self):
         return "InitTokenState"
 
-class FinishTokenState():
+class State(object):
     def __init__(self,token):
         self.token = token
+
+    def finish_state(self):
+        return FinishTokenState(self.token)
+
+class FinishTokenState(State):
+    def __init__(self,token):
+        super(FinishTokenState,self).__init__(token)
 
     def accept(self,machine):
         ch = machine.char(machine.get_pos())
@@ -62,48 +74,44 @@ class FinishTokenState():
         return "FinishTokenState"
 
 
-class IntLiteralState():
+class IntLiteralState(State):
     def __init__(self,token):
-        self.token = token
+        super(IntLiteralState,self).__init__(token)
     
     def name(self):
         return "IntLiteralState"
-
-    def accept(self,machine):
+    
+    def _is_digit(self,machine):
         ch = machine.char(machine.get_pos())
         if ch.isdigit():
             machine.forward()
             return IntLiteralState(self.token.add_text(ch))
-        else:
-            return FinishTokenState(self.token)
+        return None
 
-class IdentifierState():
-    def __init__(self):
-        pass
+    def accept(self,machine):
+        return self._is_digit(machine) or self.finish_state()
+       
 
-class Int1State():
-    def __init__(self):
-        pass
+class IdentifierState(State):
+    #FIXME case not pass
+    def __init__(self,token):
+        super(IdentifierState,self).__init__(token)
+    
+    def name(self):
+        return "IdentifierState"
+    
+    def _is_identifier(self,machine):
+        ch = machine.char(machine.get_pos())
+        # print("{0},{1}".format(machine.get_pos(),ch))
+        
+        if ch.isdigit() or ch.isalpha():
+            machine.forward()
+            return IdentifierState(self.token.add_text(ch))
+        return None
+    
+    def accept(self,machine):
+        return self._is_identifier(machine) or self.finish_state()
 
-class Int2State():
-    def __init__(self):
-        pass
-
-class Int3State():
-    def __init__(self):
-        pass
-
-class GtState():
-    def __init__(self):
-        pass
-
-class LtState():
-    def __init__(self):
-        pass
-
-class GeState():
-    def __init__(self):
-        pass
 
 # if __name__ == "__main__":
 #     print("aaa"[0])
